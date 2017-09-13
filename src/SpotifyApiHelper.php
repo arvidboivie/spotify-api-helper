@@ -11,20 +11,17 @@ class SpotifyApiHelper
     private $clientId;
     private $clientSecret;
     private $redirectURI;
-    private $apiUser;
 
     public function __construct(
         \PDO $db,
         $clientId,
         $clientSecret,
-        $redirectURI,
-        $apiUser
+        $redirectURI
     ) {
         $this->db = $db;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectURI = $redirectURI;
-        $this->apiUser = $apiUser;
     }
 
     public function getAuthorizeUrl(array $scopes)
