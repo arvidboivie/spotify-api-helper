@@ -104,12 +104,12 @@ class SpotifyApiHelper
                                          refresh_token= :refresh_token,
                                          expires= :expires');
 
-        $tokenStatment->bindParam(':id', $session->getClientId());
-        $tokenStatment->bindParam(':access_token', $session->getAccessToken());
-        $tokenStatment->bindParam(':expires', $session->getTokenExpiration());
+        $tokenStatement->bindParam(':id', $session->getClientId());
+        $tokenStatement->bindParam(':access_token', $session->getAccessToken());
+        $tokenStatement->bindParam(':expires', $session->getTokenExpiration());
 
         if ($session->getRefreshToken !== null) {
-            $tokenStatment->bindParam(':refresh_token', $session->getRefreshToken());
+            $tokenStatement->bindParam(':refresh_token', $session->getRefreshToken());
         }
 
         $tokenStatement->execute();
