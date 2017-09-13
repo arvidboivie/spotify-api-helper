@@ -60,11 +60,8 @@ class SpotifyApiHelper
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
 
-        // Start using the API!
-        $userInfo = $api->me();
-
         // Store access and refresh token
-        $this->storeToken($userInfo->id, $session);
+        $this->storeToken($session);
     }
 
     public function getApiWrapper()
@@ -75,7 +72,7 @@ class SpotifyApiHelper
             refresh_token,
             expires
             FROM `auth`
-            WHERE username = '".$this->apiUser."'"
+            WHERE id = '".$this->clientId."'"
         );
 
         $tokenStatement->execute();
@@ -91,7 +88,7 @@ class SpotifyApiHelper
                 throw new \ErrorException("Failed to refresh access token");
             }
 
-            $this->storeToken($this->apiUser, $session);
+            $this->storeToken($session);
 
             $accessToken = $session->getAccessToken();
         }
@@ -104,17 +101,17 @@ class SpotifyApiHelper
         return $api;
     }
 
-    private function storeToken($userId, $session)
+    private function storeToken($session)
     {
-        $tokenStatement = $this->db->prepare('INSERT INTO auth(username, access_token, refresh_token, expires)
-                                         VALUES(:username, :access_token, :refresh_token, :expires)
+        $tokenStatement = $this->db->prepare('INSERT INTO auth(id, access_token, refresh_token, expires)
+                                         VALUES(:id, :access_token, :refresh_token, :expires)
                                          ON DUPLICATE KEY UPDATE
                                          access_token= :access_token,
                                          refresh_token= :refresh_token,
                                          expires= :expires');
 
         $tokenStatement->execute([
-            'username' => $userId,
+            'id' => $session->getClientId(),
             'access_token' => $session->getAccessToken(),
             'refresh_token' => $session->getRefreshToken(),
             'expires' => $session->getTokenExpiration(),
