@@ -5,7 +5,7 @@ namespace Boivie\SpotifyApiHelper;
 use SpotifyWebAPI\Session;
 use SpotifyWebAPI\SpotifyWebAPI;
 
-class Helper
+class SpotifyApiHelper
 {
     private $db;
     private $clientId;
