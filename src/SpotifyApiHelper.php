@@ -50,10 +50,6 @@ class SpotifyApiHelper
         // Request a access token using the code from Spotify
         $session->requestAccessToken($code);
 
-        // Create API wrapper and set access token
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
-
         // Store access and refresh token
         $this->storeToken($session);
     }
@@ -66,10 +62,12 @@ class SpotifyApiHelper
             refresh_token,
             expires
             FROM `auth`
-            WHERE id = '".$this->clientId."'"
+            WHERE id = :id"
         );
 
-        $tokenStatement->execute();
+        $tokenStatement->execute([
+            'id' => $this->clientId,
+        ]);
 
         $result = $tokenStatement->fetchObject();
 
@@ -82,7 +80,7 @@ class SpotifyApiHelper
                 throw new \ErrorException("Failed to refresh access token");
             }
 
-            $this->storeToken($session);
+            $this->updateToken($session);
 
             $accessToken = $session->getAccessToken();
         }
@@ -95,6 +93,19 @@ class SpotifyApiHelper
         return $api;
     }
 
+    private function updateToken($session)
+    {
+        $tokenStatement = $this->db->prepare('UPDATE auth
+                                            SET access_token= :access_token, expires= :expires
+                                            WHERE id = :id');
+
+        $tokenStatement->execute([
+            'id' => $session->getClientId(),
+            'access_token' => $session->getAccessToken(),
+            'expires' => $session->getTokenExpiration(),
+        ]);
+    }
+
     private function storeToken($session)
     {
         $tokenStatement = $this->db->prepare('INSERT INTO auth(id, access_token, refresh_token, expires)
@@ -104,14 +115,11 @@ class SpotifyApiHelper
                                          refresh_token= :refresh_token,
                                          expires= :expires');
 
-        $tokenStatement->bindParam(':id', $session->getClientId());
-        $tokenStatement->bindParam(':access_token', $session->getAccessToken());
-        $tokenStatement->bindParam(':expires', $session->getTokenExpiration());
-
-        if ($session->getRefreshToken !== null) {
-            $tokenStatement->bindParam(':refresh_token', $session->getRefreshToken());
-        }
-
-        $tokenStatement->execute();
+        $tokenStatement->execute([
+            'id' => $session->getClientId(),
+            'access_token' => $session->getAccessToken(),
+            'refresh_token' => $session->getRefreshToken(),
+            'expires' => $session->getTokenExpiration(),
+        ]);
     }
 }
