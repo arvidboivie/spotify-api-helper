@@ -49,9 +49,6 @@ class SpotifyApiHelper
 
         // Request a access token using the code from Spotify
         $session->requestAccessToken($code);
-        $accessToken = $session->getAccessToken();
-        $refreshToken = $session->getRefreshToken();
-        $expiration = $session->getTokenExpiration();
 
         // Create API wrapper and set access token
         $api = new SpotifyWebAPI();
@@ -107,11 +104,14 @@ class SpotifyApiHelper
                                          refresh_token= :refresh_token,
                                          expires= :expires');
 
-        $tokenStatement->execute([
-            'id' => $session->getClientId(),
-            'access_token' => $session->getAccessToken(),
-            'refresh_token' => $session->getRefreshToken(),
-            'expires' => $session->getTokenExpiration(),
-        ]);
+        $tokenStatment->bindParam(':id', $session->getClientId());
+        $tokenStatment->bindParam(':access_token', $session->getAccessToken());
+        $tokenStatment->bindParam(':expires', $session->getTokenExpiration());
+
+        if ($session->getRefreshToken !== null) {
+            $tokenStatment->bindParam(':refresh_token', $session->getRefreshToken());
+        }
+
+        $tokenStatement->execute();
     }
 }
