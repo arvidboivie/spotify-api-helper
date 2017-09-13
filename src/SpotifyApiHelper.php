@@ -64,19 +64,7 @@ class SpotifyApiHelper
         $userInfo = $api->me();
 
         // Store access and refresh token
-        $tokenStatement = $this->db->prepare('INSERT INTO auth(username, access_token, refresh_token, expires)
-                                         VALUES(:username, :access_token, :refresh_token, :expires)
-                                         ON DUPLICATE KEY UPDATE
-                                         access_token= :access_token,
-                                         refresh_token= :refresh_token,
-                                         expires= :expires');
-
-        $tokenStatement->execute([
-            'username' => $userInfo->id,
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'expires' => $expiration,
-        ]);
+        $this->storeToken($userInfo->id, $session);
     }
 
     public function getApiWrapper()
@@ -99,7 +87,12 @@ class SpotifyApiHelper
         if (time() > $result->expires) {
             $session = new Session($this->clientId, $this->clientSecret);
 
-            $session->refreshAccessToken($result->refresh_token);
+            if ($session->refreshAccessToken($result->refresh_token) === false) {
+                throw new \ErrorException("Failed to refresh access token");
+            }
+
+            $this->storeToken($this->apiUser, $session);
+
             $accessToken = $session->getAccessToken();
         }
 
@@ -109,5 +102,22 @@ class SpotifyApiHelper
         $api->setAccessToken($accessToken);
 
         return $api;
+    }
+
+    private function storeToken($userId, $session)
+    {
+        $tokenStatement = $this->db->prepare('INSERT INTO auth(username, access_token, refresh_token, expires)
+                                         VALUES(:username, :access_token, :refresh_token, :expires)
+                                         ON DUPLICATE KEY UPDATE
+                                         access_token= :access_token,
+                                         refresh_token= :refresh_token,
+                                         expires= :expires');
+
+        $tokenStatement->execute([
+            'username' => $userId,
+            'access_token' => $session->getAccessToken(),
+            'refresh_token' => $session->getRefreshToken(),
+            'expires' => $session->getTokenExpiration(),
+        ]);
     }
 }
