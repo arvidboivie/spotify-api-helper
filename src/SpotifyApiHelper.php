@@ -32,9 +32,9 @@ class SpotifyApiHelper
             $this->redirectURI
         );
 
-        $authorizeUrl = $session->getAuthorizeUrl(array(
+        $authorizeUrl = $session->getAuthorizeUrl([
             'scope' => $scopes
-        ));
+        ]);
 
         return $authorizeUrl;
     }
